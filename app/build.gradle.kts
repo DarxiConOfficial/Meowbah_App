@@ -2,7 +2,6 @@ import java.util.Properties // Added for local.properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp) // Added KSP plugin
     id("kotlin-parcelize") // Added this line
@@ -40,25 +39,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
         buildConfig = true // Keep true if other BuildConfig fields might be used, or set to false if none are left.
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidxComposeCompiler.get()
-    }
-    kotlinOptions { 
-        jvmTarget = "11"
     }
 }
 
 dependencies {
     // wearApp(project(":wear")) // REMOVED THIS LINE
 
-    val room_version = "2.6.1" // Define Room version
+    val room_version = "2.8.4" // Define Room version
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")

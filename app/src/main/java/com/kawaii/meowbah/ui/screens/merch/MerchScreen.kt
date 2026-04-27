@@ -18,7 +18,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kawaii.meowbah.R // For placeholder
@@ -27,7 +26,7 @@ import com.kawaii.meowbah.data.model.MerchItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MerchScreen(
-    navController: NavController,
+    onMerchClick: (String) -> Unit,
     merchViewModel: MerchViewModel = viewModel()
 ) {
     val merchItems by merchViewModel.merchItems.collectAsState()
@@ -54,9 +53,7 @@ fun MerchScreen(
             ) {
                 items(merchItems) { item ->
                     MerchGridItem(merchItem = item) {
-                        // Navigate to MerchDetailScreen, passing the merch item's ID
-                        // We'll define "merchDetail/{merchId}" route later
-                        navController.navigate("merchDetail/${item.id}")
+                        onMerchClick(item.id)
                     }
                 }
             }

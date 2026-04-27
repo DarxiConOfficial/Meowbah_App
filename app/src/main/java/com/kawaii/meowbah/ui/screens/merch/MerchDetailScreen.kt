@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kawaii.meowbah.R // For placeholder
@@ -31,9 +30,9 @@ import com.kawaii.meowbah.data.model.MerchItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MerchDetailScreen(
-    navController: NavController,
     merchId: String?,
-    merchViewModel: MerchViewModel = viewModel()
+    merchViewModel: MerchViewModel = viewModel(),
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     var merchItem by remember { mutableStateOf<MerchItem?>(null) }
@@ -44,118 +43,111 @@ fun MerchDetailScreen(
         }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0.dp)
-    ) { paddingValues ->
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         if (merchItem == null) {
             Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues).safeDrawingPadding(),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Back button for consistency even when item is not found, or error
-                FilledTonalIconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.align(Alignment.TopStart).padding(16.dp) // Positioned top-left
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
                 if (merchId == null) {
-                    Text("Error: Merch ID not provided.", modifier = Modifier.padding(16.dp))
+                    Text("Error: Merch ID not provided.")
                 } else {
-                    Text("Loading merch details or item not found...", modifier = Modifier.padding(16.dp))
+                    Text("Loading merch details or item not found...")
                 }
             }
         } else {
             merchItem?.let { item ->
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues) // Apply scaffold padding first
+                        .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .safeDrawingPadding()
-                    ,
+                        .padding(bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(64.dp)) // Added Spacer
-                    // Row for Back and Share buttons
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp), // Padding for the row itself
+                            .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledTonalIconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                        // Item name Text composable removed from here
-                        FilledTonalIconButton(onClick = {
-                            val shareText = if (item.storeUrl != null) {
-                                "Check out this merch: ${item.name}. Available here: ${item.storeUrl}"
-                            } else {
-                                "Check out this merch: ${item.name}"
+                        Text(
+                            text = "Merch Details",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Row {
+                            FilledTonalIconButton(onClick = {
+                                val shareText = if (item.storeUrl != null) {
+                                    "Check out this merch: ${item.name}. Available here: ${item.storeUrl}"
+                                } else {
+                                    "Check out this merch: ${item.name}"
+                                }
+                                val shareIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    type = "text/plain"
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Merch Via"))
+                            }) {
+                                Icon(Icons.Filled.Share, contentDescription = "Share Merch")
                             }
-                            val shareIntent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, shareText)
-                                type = "text/plain"
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledTonalIconButton(onClick = onDismiss) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share Merch Via"))
-                        }) {
-                            Icon(Icons.Filled.Share, contentDescription = "Share Merch")
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp)) // Spacer after the buttons row
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Content padding now applied to a new inner Column for better control
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(item.imageResId)
-                                .crossfade(true)
-                                .placeholder(R.drawable.ic_placeholder) // Generic placeholder
-                                .error(R.drawable.ic_launcher_background) // Error placeholder
-                                .build(),
-                            contentDescription = item.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f) // Adjust aspect ratio as needed, 1f for square
-                                .padding(bottom = 16.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        Text(
-                            text = item.name, // Name is still displayed here, below the image
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(item.imageResId)
+                            .crossfade(true)
+                            .placeholder(R.drawable.ic_placeholder)
+                            .error(R.drawable.ic_launcher_background)
+                            .build(),
+                        contentDescription = item.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .padding(bottom = 16.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Price: ${item.price}",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = item.description,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    item.storeUrl?.let {
+                        FilledTonalButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
+                                context.startActivity(intent)
+                            },
+                            shape = MaterialTheme.shapes.medium,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Price: ${item.price}",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = item.description,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        item.storeUrl?.let {
-                            FilledTonalButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
-                                    context.startActivity(intent)
-                                },
-                                shape = MaterialTheme.shapes.medium,
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                                               .fillMaxWidth(0.8f)
-                            ) {
-                                Text("View in Store")
-                            }
+                                           .fillMaxWidth(0.8f)
+                        ) {
+                            Text("View in Store")
                         }
-                        Spacer(modifier = Modifier.height(16.dp)) // Add some padding at the bottom
                     }
                 }
             }

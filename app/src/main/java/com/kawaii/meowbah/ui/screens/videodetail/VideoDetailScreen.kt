@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kawaii.meowbah.R
@@ -36,9 +35,9 @@ private const val TAG = "VideoDetailScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoDetailScreen(
-    navController: NavController,
     videoId: String, 
-    videosViewModel: VideosViewModel
+    videosViewModel: VideosViewModel,
+    onDismiss: () -> Unit
 ) {
     Log.d(TAG, "Composing for videoId: '$videoId'. ViewModel instance: $videosViewModel")
 
@@ -55,47 +54,40 @@ fun VideoDetailScreen(
         foundItem
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0.dp)
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                isLoadingFromVM && videoItem == null -> {
-                    Log.d(TAG, "Showing loading indicator (isLoadingFromVM && videoItem == null)")
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                errorFromVM != null && videoItem == null -> {
-                    Log.d(TAG, "Showing error: $errorFromVM (errorFromVM != null && videoItem == null)")
-                    Text(
-                        text = "Error: $errorFromVM",
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(16.dp)
-                            .safeDrawingPadding()
-                    )
-                }
-                videoItem != null -> {
-                    Log.d(TAG, "Showing VideoDetailContent for videoId: ${videoItem.id}")
-                    VideoDetailContent(videoItem = videoItem, navController = navController)
-                }
-                else -> { 
-                    Log.d(TAG, "Showing fallback: Video details not found for ID '$videoId'. isLoading: $isLoadingFromVM, error: $errorFromVM, videoListSize: ${videosList.size}")
-                    Text(
-                        "Video details not found. It might have been removed or the ID is incorrect.",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(16.dp)
-                            .safeDrawingPadding()
-                    )
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        when {
+            isLoadingFromVM && videoItem == null -> {
+                Log.d(TAG, "Showing loading indicator (isLoadingFromVM && videoItem == null)")
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            errorFromVM != null && videoItem == null -> {
+                Log.d(TAG, "Showing error: $errorFromVM (errorFromVM != null && videoItem == null)")
+                Text(
+                    text = "Error: $errorFromVM",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp)
+                )
+            }
+            videoItem != null -> {
+                Log.d(TAG, "Showing VideoDetailContent for videoId: ${videoItem.id}")
+                VideoDetailContent(videoItem = videoItem, onDismiss = onDismiss)
+            }
+            else -> { 
+                Log.d(TAG, "Showing fallback: Video details not found for ID '$videoId'. isLoading: $isLoadingFromVM, error: $errorFromVM, videoListSize: ${videosList.size}")
+                Text(
+                    "Video details not found. It might have been removed or the ID is incorrect.",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp)
+                )
             }
         }
     }
@@ -104,39 +96,44 @@ fun VideoDetailScreen(
 @Composable
 fun VideoDetailContent(
     videoItem: CachedVideoInfo, // Changed from VideoItem
-    navController: NavController
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .verticalScroll(scrollState)
-            .safeDrawingPadding()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(bottom = 32.dp)
     ) {
-        Spacer(modifier = Modifier.height(64.dp)) // Added Spacer
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilledTonalIconButton(onClick = { navController.popBackStack() }) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            FilledTonalIconButton(onClick = {
-                val shareIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, "Check out this video: http://www.youtube.com/watch?v=${videoItem.id}")
-                    type = "text/plain"
+            Text(
+                text = "Video Details",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Row {
+                FilledTonalIconButton(onClick = {
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, "Check out this video: http://www.youtube.com/watch?v=${videoItem.id}")
+                        type = "text/plain"
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share video via"))
+                }) {
+                    Icon(imageVector = Icons.Filled.Share, contentDescription = "Share video")
                 }
-                context.startActivity(Intent.createChooser(shareIntent, "Share video via"))
-            }) {
-                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share video")
+                Spacer(modifier = Modifier.width(8.dp))
+                FilledTonalIconButton(onClick = onDismiss) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
+                }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         ElevatedCard(
             shape = MaterialTheme.shapes.medium,
@@ -161,7 +158,7 @@ fun VideoDetailContent(
         Text(
             text = videoItem.title,
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
         
         Text(
@@ -171,18 +168,15 @@ fun VideoDetailContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Statistics (view count, like count) have been removed as they are not in CachedVideoInfo
-        // If these are needed, a separate mechanism to fetch full video details would be required.
-
         videoItem.description?.let {
              Text(
                 text = it,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
             )
         }
        
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         FilledTonalButton(
             onClick = {
@@ -200,7 +194,6 @@ fun VideoDetailContent(
         ) {
             Text("Open in YouTube")
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
