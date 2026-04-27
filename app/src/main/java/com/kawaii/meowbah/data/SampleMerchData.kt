@@ -28,7 +28,7 @@ object SampleMerchData {
         MerchItem(
             id = "merch_003",
             name = "PRE ORDER - Acrylic Keychain (limited)",
-            description = "Meowbah keychain :3!\n1. This keychain is limited! Once pre-orders end it won't be purchasable anymore<br>2. Only if 50+ pre-orders are placed, then it will go into production :3<br>3. If it goes into production meow will release Meowgod keychain next >_>\nPre-order Ends: January 3rd, 2026\nEstimated Ship Date: January 2026",
+            description = "Meowbah keychain :3!\n1. This keychain is limited! Once pre-orders end it won't be purchasable anymore\n2. Only if 50+ pre-orders are placed, then it will go into production :3\n3. If it goes into production meow will release Meowgod keychain next >_>\nPre-order Ends: January 3rd, 2026\nEstimated Ship Date: January 2026",
             price = "$8",
             imageResId = R.drawable.keychain, // Replace with your actual drawable
             storeUrl = "https://meowbah-shop.fourthwall.com/en-usd/products/pre-order-acrylic-keychain-limited" // Optional: Replace with actual URL

@@ -59,7 +59,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kawaii.meowbah.R
@@ -73,7 +72,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideosScreen(
-    navController: NavController,
+    onVideoClick: (String) -> Unit,
     viewModel: VideosViewModel
 ) {
     android.util.Log.d("VideosScreen", "ViewModel instance: $viewModel")
@@ -148,7 +147,7 @@ fun VideosScreen(
                     ) {
                         items(videosState) { video ->
                             VideoListItem(video = video, onVideoClick = { clickedVideo ->
-                                navController.navigate("video_detail/${clickedVideo.id}")
+                                onVideoClick(clickedVideo.id)
                             })
                         }
                         if (videosState.isNotEmpty()) {
@@ -237,7 +236,7 @@ fun VideosScreen(
                                 },
                                 modifier = Modifier.clickable {
                                     searchActive = false
-                                    navController.navigate("video_detail/${video.id}")
+                                    onVideoClick(video.id)
                                 }.padding(vertical = 8.dp)
                             )
                         }
